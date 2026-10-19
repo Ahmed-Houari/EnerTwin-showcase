@@ -117,6 +117,12 @@ rather than let it run on a doubtful day.
   revoke, expiry, an audit trail, exactly-once execution and exact replay.
 - **Remote View.** A read-only phone page fed over MQTT (EMQX), with no controls.
 
+<p align="center">
+  <img src="docs/images/remote-view-phone-1.png" width="230" alt="Remote View on a phone: building power now, today's kW curve with the AI's 09:00 forecast, and the AI decision running under AUTO">
+  <img src="docs/images/remote-view-phone-2.png" width="230" alt="Remote View on a phone: the Flexible AUTO permission with its limits and actions so far, and the building now (people, setpoint, warmest occupied zone)">
+  <br><em>Remote View: read-only live monitoring from any phone over MQTT</em>
+</p>
+
 | Year view | Energy Flow |
 |---|---|
 | ![Year view: monthly electricity in three scenarios](docs/images/year-view.png) | ![Energy Flow along the building edges](docs/images/energy-flow.png) |
