@@ -1,14 +1,14 @@
 # EnerTwin v3: the all-season surrogate v2 against a simple fixed rule (2026-10-18)
 
-Milestone (owner, 2026-10-18): the AI must never do worse than a simple fixed rule, and must understand all seasons;
+Milestone (2026-10-18): the AI must never do worse than a simple fixed rule, and must understand all seasons;
 the validated June results stay reproducible. Every figure is a model result: simulated control of a simulated building
 (EnergyPlus v3), Riyadh TMYx weather, simulated occupancy. No meter, sensor or equipment is involved.
 
 **Single source of truth for the numbers:** `docs/v3_results.md`. This document records the method and the evidence.
 
-## Update 2026-10-19: the owner options and a fourth, untouched test (section 8)
+## Update 2026-10-19: two safety-margin options and a fourth, untouched test (section 8)
 
-With the owner's two options (a: a 26.0 °C hold only with a projected warmest occupied zone ≤ 25.9 °C; b: the rule's
+With two safety-margin options (a: a 26.0 °C hold only with a projected warmest occupied zone ≤ 25.9 °C; b: the rule's
 25.5 °C hold also below the benefit floor when it still saves, keeps comfort and the peak) the manual AI matches the
 fixed rule in December, June and March and trails it by 1.0 kWh on the new, untouched test (2–15 February, held out of
 a refit). Flexible AUTO matches rule + lighting in June and March, trails by 0.9 kWh in February and by 61.4 kWh in
@@ -140,7 +140,7 @@ past was exact (max diff 0.0), no duplicate. Together with the v1 dataset (11,66
 training day (the winter test, and no lead-in can start before 1 January), so the winter test sits at the edge of the
 training data, not inside a month the model saw densely.
 
-Running it on this laptop (32 threads, 31.2 GB RAM, commit limit 43.7 GB): 20 recycled workers (`max_tasks_per_child=4`,
+Running it on the development machine (32 threads, 31.2 GB RAM, commit limit 43.7 GB): 20 recycled workers (`max_tasks_per_child=4`,
 no numpy in workers), at the same time as up to two fortnight runs and an 8-worker truth grid. Free RAM never fell below
 3.0 GB and commit peaked at 34.6 of 43.7 GB (`tmp/v3_allseason/logs/resources.log`, one line a minute); no job failed.
 
@@ -172,7 +172,7 @@ Out-of-range fallback unchanged (any input more than 10 % of its training span o
 
 ## 6. Evaluation
 
-Sections 6 and 7 describe v2 **without** the owner options (2026-10-18); since the options exist those runs are labelled
+Sections 6 and 7 describe v2 **without** the safety-margin options (2026-10-18); since the options exist those runs are labelled
 `*_v2_plain` (`tmp/v3_allseason/<period>/runs/manual_surrogate_v2_plain.json`, `flexible_auto_v2_plain.json`) and are
 reproduced with `--no-v2-options`. The options are in section 8.
 
@@ -314,20 +314,20 @@ The rule does the same 25.5 °C hold every workday in every season.
 - Anything beyond this model: one building, one weather file, simulated occupancy; whether 26 °C is acceptable to
   occupants is a policy choice.
 
-**Owner decisions that would close the gap (not implemented; each widens nothing but changes a documented check):**
+**Design choices that would close the gap (not implemented; each widens nothing but changes a documented check):**
 (a) let the optimizer pick the 26.0 °C hold only with a comfort margin (for example a projected warmest occupied zone at
 most 25.9 °C), which would have kept March at 25.5 °C on Tue 13; (b) let the rule's own 25.5 °C hold through below the
 benefit floor when its projection keeps comfort and does not raise the peak, which would have matched the rule on the five
-cold December days. Either needs the owner's decision (the benefit floor and the comfort band are part of the
+cold December days. Either needs an explicit design decision (the benefit floor and the comfort band are part of the
 permission's checks) and a new untouched test period.
 
 The validated optimizer (`energyplus`) stays the default of the API, and a double-click of the launcher still starts the
-v1 surrogate (`surrogate`); v2 is opt-in (`--optimizer surrogate_v2`, `ENERTWIN_V3_OPTIMIZER=surrogate_v2`) until the
-owner decides.
+v1 surrogate (`surrogate`); v2 is opt-in (`--optimizer surrogate_v2`, `ENERTWIN_V3_OPTIMIZER=surrogate_v2`) until a
+decision is made.
 
-## 8. The owner options (owner decision 2026-10-19) and the February test
+## 8. The safety-margin options (adopted 2026-10-19) and the February test
 
-The owner chose both options of section 7, behind the v2 flag (`dr.V2_OPTIONS`; run setting `v2_options`, on by
+Both options of section 7 were adopted, behind the v2 flag (`dr.V2_OPTIONS`; run setting `v2_options`, on by
 default for `surrogate_v2`, pinned in the run's manifest; `--no-v2-options` reproduces the v2 runs above, which are now
 labelled "v2 without options", `*_v2_plain`):
 
@@ -336,12 +336,12 @@ labelled "v2 without options", `*_v2_plain`):
 - **(b) The rule below the floor:** when no candidate reaches the 2 kWh / 0.5 % benefit floor, the fixed rule's own 25.5 °C
   hold of that decision is chosen when its projection still saves energy (kWh change < 0), keeps occupied comfort and
   does not raise the day peak (role `rule`); under the Flexible permission AUTO's benefit check accepts exactly this
-  action on exactly these conditions (`auto_assessment(..., rule_floor_id=...)`), the audit says so ("projected saving
-  below the 2 kWh / 0.5 % floor: the fixed rule's own hold (owner option b, 2026-10-19)"), and the grant states both
+  action on exactly these conditions (`auto_assessment(..., rule_floor_id=...)`), the audit says so (the check names the
+  fixed rule's own hold below the 2 kWh / 0.5 % floor, option b), and the grant states both
   options (`terms.v2_options`, the `requires` text). Every other check and guard is unchanged (comfort band, peak, live
   comfort guard, early read, verification suspension, limits, scope).
 
-Unit tests: `tests/test_v3_optimizer_v2.OwnerOptionTests`.
+Unit tests: `tests/test_v3_optimizer_v2.SafetyMarginOptionTests`.
 
 ### 8.1 The February test (locked before the options were coded)
 
@@ -411,7 +411,7 @@ has no buffer against forecast error, and the early read compares against the fo
 - Two mechanisms remain, both measured: (1) a rule hold projected at exactly 0.0 kWh is not "a saving" under option (b),
   yet the rule's verified saving that day was small and real; (2) under AUTO, a below-floor rule hold can trip the early
   read on a day warmer than forecast, and the suspension then costs every remaining day.
-- Owner decisions that would close them (not implemented, each changes a guard or a check): accept the rule's hold when
+- Design choices that would close them (not implemented, each changes a guard or a check): accept the rule's hold when
   its projection is ≤ 0 kWh (not only < 0); and for a below-floor rule hold, read early against the no-action replay
   instead of the forecast, or exempt it from the early-read loss limit while keeping the live comfort guard. Either
   needs another untouched period to test honestly, which this weather year no longer has without another hold-out.

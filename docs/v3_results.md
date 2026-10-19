@@ -16,7 +16,7 @@ horizon (its day and three more, then on to the end of the next workday), reboun
 | Manual | detection list (4–6 candidates) | 10 manual | **−1,072.9 kWh** | 14,627.1 kWh | 6.8 % |
 | Exact-hold AUTO (one grant) | detection list | 0 | **−1,138.8 kWh** (holds −1,069.2, lighting −69.6) | 14,556.2 kWh | 7.3 % |
 | Surrogate, manual | ML-screened grid, EnergyPlus confirms | 10 manual | **−1,565.7 kWh** | 14,156.9 kWh | 10.0 % |
-| **Envelope AUTO (one grant)** | ML-screened grid, EnergyPlus confirms | **0** | **−1,629.1 kWh** (holds −1,561.6, lighting −67.5) | **14,089.2 kWh** | **10.4 %** |
+| **Flexible AUTO (envelope permission), one grant** | ML-screened grid, EnergyPlus confirms | **0** | **−1,629.1 kWh** (holds −1,561.6, lighting −67.5) | **14,089.2 kWh** | **10.4 %** |
 
 **No-action consumption of the fortnight:** 15,678.3 kWh (the EnergyPlus batch of the same 14 days with no action,
 occ_room case, `data/synthetic/energy_model_v3_poc/occupancy/comparison_summer_fortnight.json`; the stepping runtime
@@ -35,7 +35,7 @@ above alike).
   found that choice among 242 documented options at every decision without a hand-written rule; on days where the
   weather, the morning state or the rebound favour another window or a pre-cool it would pick that one (the training
   data contain such days), but this fortnight does not demonstrate it.
-- **Comfort trade-off.** The saving comes from warmer occupied rooms, inside the owner's band: during a hold the
+- **Comfort trade-off.** The saving comes from warmer occupied rooms, inside the permitted comfort band: during a hold the
   warmest occupied zone reaches 25.5 °C (exact-hold AUTO: 25.0 °C; no action: 24.0 °C). Zero occupied zone-hours fell
   outside 19.5–26 °C, and every verification's comfort and occupied-lighting checks passed. Whether 25.5 °C is
   acceptable for the occupants is a policy choice the model cannot make; the envelope permits 24.5–26.0 °C.
@@ -74,9 +74,9 @@ Energy used over each fortnight (kWh; below no action in brackets):
   −1,629.1 kWh (Flexible AUTO) command for command; the detection-list manual run gives −1,072.9 kWh; the defaults
   (`energyplus` for the API, `surrogate` v1 on a double-click) are unchanged.
 
-### Owner options of v2 and a fourth, untouched test (2026-10-19)
+### Two safety-margin options of v2 and a fourth, untouched test (2026-10-19)
 
-Owner decision: (a) a 26.0 °C hold only when the warmest occupied zone is projected at most 25.9 °C; (b) the fixed rule's
+Adopted 2026-10-19: (a) a 26.0 °C hold only when the warmest occupied zone is projected at most 25.9 °C; (b) the fixed rule's
 25.5 °C hold also below the 2 kWh / 0.5 % benefit floor when its projection still saves energy, keeps comfort and does
 not raise the peak (`surrogate_v2`, run setting `v2_options`, on by default). New test locked first: **2–15 February**,
 held out of a refit of the v2 recipe without February (`v3_surrogate_v2h`), since every month was in v2's training.
@@ -96,7 +96,7 @@ Energy used, kWh (lower is better):
   0.0 kWh, where the rule still saved 1.0 kWh together. December's Flexible 61.4 kWh: a below-floor rule hold tripped the
   early-read guard (5.1 kWh above the no-action forecast, limit 5.0, on a day warmer than forecast; it verified a saving),
   the permission stayed suspended, and the last four workdays expired. **"Never worse than the rule" is still not met
-  exactly**; full analysis and the remaining owner choices: `docs/v3_allseason.md` section 8.
+  exactly**; full analysis and the remaining design choices: `docs/v3_allseason.md` section 8.
 
 ## Second test fortnight: 2–15 March (pure test, 2026-10-18)
 
@@ -120,7 +120,7 @@ No-action fortnight 7,116.2 kWh. 0 occupied zone-hours outside 19.5–26 °C in 
 
 - **The AI does not beat the fixed rule.** In March the rule wins: 119.7 against 66.9 kWh (cooling only) and 170.4
   against 114.3 kWh (with the lighting delay, against Flexible AUTO). In June the rule matches the AI exactly: rule
-  −1,565.7 kWh of 14,156.9 kWh (= surrogate manual), rule + lighting −1,629.1 kWh of 14,089.2 kWh (= envelope AUTO).
+  −1,565.7 kWh of 14,156.9 kWh (= surrogate manual), rule + lighting −1,629.1 kWh of 14,089.2 kWh (= Flexible AUTO).
   The rule's hold is the surrogate's June pick, so in June it is not an independent baseline; March is a fair test of
   both.
 - **Why the AI lost in March:** every workday had inputs outside the surrogate's training range (morning ground-floor
@@ -184,7 +184,7 @@ square of its length). Nothing in the AI, its guards or the results above change
 
 ## Live runs (browser, Demo speed; not the validated table)
 
-- **Fresh envelope-AUTO run on the final code (2026-10-18, the default view):** through the real web API at Demo
+- **Fresh Flexible AUTO run on the final code (2026-10-18, the default view):** through the real web API at Demo
   speed, one grant on Friday 00:40, 20 AUTO actions, 0 manual approvals: **−1,629.1 kWh of 14,089.2 kWh**, identical to
   the validated fortnight (`docs/v3_demo_video.md`).
 - Earlier live runs differ from the table only by when the operator acted: the surrogate live run with one manual

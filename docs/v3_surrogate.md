@@ -1,10 +1,10 @@
-# v3 ML surrogate of the EnergyPlus decision step, and the envelope AUTO permission (2026-10-17)
+# v3 ML surrogate of the EnergyPlus decision step, and Flexible AUTO (envelope permission) (2026-10-17)
 
 The v3 optimizer projects every candidate action with an isolated EnergyPlus run, so a decision could afford only four
 to six candidates. This milestone adds a trained ML surrogate of that forecast-time projection: it screens a documented
 grid of 242 candidate actions in milliseconds, EnergyPlus confirms the few it picks with the existing projection, and
 every downstream check (comfort, thresholds, approval or AUTO, verification) reads EnergyPlus figures only. The second
-part is the envelope AUTO permission: within the documented candidate space the system runs 14 simulated days on one
+part is the Flexible AUTO permission: within the documented candidate space the system runs 14 simulated days on one
 grant with no daily approvals. Simulated control of a simulated building; nothing physical is controlled.
 
 **The surrogate never approves, executes or verifies anything.** It ranks. EnergyPlus is the final check: a candidate the
@@ -132,12 +132,12 @@ counts, code hashes, context-run manifests, dataset sha256).
 late-May probe (longer replay) took 60 s for 49 runs (1.22 s per run of throughput). The full plan was sized to 252
 decisions and 11,916 EnergyPlus runs.
 
-**Running it on this laptop (32 threads, 31.2 GB RAM, 12 GB page file):** the binding limit is the Windows commit limit
+**Running it on the development machine (32 threads, 31.2 GB RAM, 12 GB page file):** the binding limit is the Windows commit limit
 (43.2 GB), not physical RAM. The first attempt at 30 workers ended in an EnergyPlus `Severe ** bad allocation` while
 other programs held about 17 GB. Two changes made it safe: the generator's pools recycle workers every four runs
 (`max_tasks_per_child=4`), and no worker imports numpy (importing numpy commits about 1.5 GB per process for OpenBLAS
 buffers with 32 threads: 1,584 MB against 106 MB with `OPENBLAS_NUM_THREADS=1`). The run was resumed several times
-(stops, a restart of the laptop); the resume skips finished decisions, and a check after every stop found the rows and
+(stops, a restart of the machine); the resume skips finished decisions, and a check after every stop found the rows and
 the progress file consistent (no torn line, no orphan rows, no duplicates). 14 to 21 workers ran at about 36–48
 EnergyPlus runs per minute.
 
@@ -247,7 +247,7 @@ max diff 0.0, in both runs). Every verification is the usual independent no-acti
 
 | 14 days, 8–21 June | Approvals | Verified saving | Used | Δ against exact-hold AUTO |
 |---|---|---|---|---|
-| **Envelope AUTO, one grant on day 1, surrogate optimizer** | **0** (0 fallbacks, 0 proposals left) | **−1,629.1 kWh** (holds −1,561.6, lighting −67.5) | 14,089.2 kWh | **−490.3 kWh (+43 %)** |
+| **Flexible AUTO, one grant on day 1, surrogate optimizer** | **0** (0 fallbacks, 0 proposals left) | **−1,629.1 kWh** (holds −1,561.6, lighting −67.5) | 14,089.2 kWh | **−490.3 kWh (+43 %)** |
 | Surrogate optimizer, manual (every proposal approved, HVAC only) | 10 | −1,565.7 kWh | 14,156.9 kWh | |
 | Exact-hold AUTO, current optimizer (regression rerun, final code) | 0 | −1,138.8 kWh (holds −1,069.2, lighting −69.6) | 14,556.2 kWh | reference |
 | Manual, current optimizer (regression rerun, final code) | 10 | −1,072.9 kWh | 14,627.1 kWh | |
@@ -257,7 +257,7 @@ max diff 0.0, in both runs). Every verification is the usual independent no-acti
   with the reason. Verified per hold: −146.4 to −173.0 kWh (projected −145.2 to −165.8); the ten projections sum to
   −1,543.6 kWh against −1,561.6 verified.
 - **Better, plainly:** the decisions improved: 43 % more verified saving than the exact-hold AUTO run, with zero
-  approvals and every guard in place. The price is comfort margin, inside the owner's band: during a hold the warmest
+  approvals and every guard in place. The price is comfort margin, inside the permitted comfort band: during a hold the warmest
   occupied zone reaches 25.5 °C instead of 25.0 °C (0 occupied zone-hours outside 19.5–26 °C; every verification's
   comfort and occupancy checks passed). The 25.5 °C hold also cuts the day peak by about 21 kW instead of 15 kW.
 - **What the surrogate did not do:** on this fortnight the best choice was the same every day, so a fixed "25.5 °C"
@@ -277,7 +277,7 @@ runs, `data/surrogate_v3/eval_spring/metrics.md`) shows why the fallback is need
 25.5 °C (five days) or 26.0 °C (five days). A fixed "25.5 °C, 09:00–18:00" rule beat both the manual and the
 Flexible-permission AUTO runs in March and matched the surrogate runs exactly in June.
 
-## 7. The envelope AUTO permission (owner decision, 2026-10-17)
+## 7. Flexible AUTO (envelope permission, adopted 2026-10-17)
 
 A third consent scope, `envelope` (`term: multi_day`: 1–14 simulated days, no wall-clock cap, bound to the run and its
 manifest, one at a time, never silently renewed; the same per-day limits and guards as the exact-hold permission). Within
@@ -294,7 +294,7 @@ it AUTO executes whatever the optimizer selects each day, with no daily approval
 The grant sheet offers the envelope first (on screen "Flexible permission": families, bounds, exclusions, the EnergyPlus
 confirmation, the guards), then the exact-hold permission and the short lighting consent. The consent record carries
 the envelope bounds (`envelope`), the API's `auto_consent.policy.envelope` and `scopes.envelope` state them, and the
-launcher's AUTO line names an active envelope. The statement is in `CLAUDE.md`, `AGENTS.md` and `PROJECT_HANDOVER.md`.
+launcher's AUTO line names an active envelope.
 The envelope grant is accepted with either optimizer: the rule is on the action's parameters.
 
 Under the exact-hold permission with the surrogate optimizer, the daily lighting candidate is `lighting_delay_5` only and
@@ -350,7 +350,7 @@ all-season retrain is `--optimizer surrogate_v2` with its own artifact (`data/su
 sha256 `fd6db8ee…`, fingerprint `d9e15808…`): the same features, grid and method, trained on all twelve months with the
 locked test fortnights excluded (20,092 rows), and an optimizer that always has EnergyPlus confirm the fixed rule's
 25.5 °C hold, the 26.0 °C hold and the 5-minute lighting delay, then picks the largest projected saving that is
-beneficial and does not raise the peak. Owner options (2026-10-19, on by default for `surrogate_v2`): a 26.0 °C hold
+beneficial and does not raise the peak. Safety-margin options (2026-10-19, on by default for `surrogate_v2`): a 26.0 °C hold
 only with a projected warmest occupied zone ≤ 25.9 °C, and the rule's 25.5 °C hold also below the benefit floor when it
 still saves, keeps comfort and the peak. A February hold-out refit (`v3_surrogate_v2h`) serves the untouched February
 test only. Results, method and limits: `docs/v3_allseason.md`; numbers: `docs/v3_results.md`.

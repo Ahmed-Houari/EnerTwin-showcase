@@ -6,6 +6,15 @@ Its core is **AI optimization (surrogate-assisted)**: each workday morning an ML
 lighting strategies (about 0.11 ms each), EnergyPlus confirms the best, and the controller executes the chosen one with an
 operator's approval or under a time-limited AUTO permission; every executed action is then verified against a no-action replay.
 
+| At a glance (all in simulation) | |
+|---|---|
+| Electricity over a typical year | **about 11 % less** than conventional operation |
+| The AI's share | **about 7 %** on top of occupancy-based lighting |
+| Annual peak | **13 % lower** |
+| Occupied zone-hours outside the comfort band (19.5–26 °C) | **0** |
+| Autonomy | **14 days** under Flexible AUTO on one operator approval, zero daily approvals |
+| Screening per workday | **242 strategies** ranked by an ML surrogate trained on **11,916 EnergyPlus runs** (the live-demo model) |
+
 > **Everything here is simulated.** No meter, sensor or real building is involved, and the building model is not
 > calibrated to a real building. Read the [limitations](#honest-limitations) before quoting any number.
 
@@ -70,7 +79,7 @@ earlier stop.
 
 ### The validated fortnight (8–21 June)
 
-Each action verified against an independent no-action EnergyPlus replay over its own horizon, rebound included. No
+Each action is verified against an independent no-action EnergyPlus replay over its own horizon, rebound included. No
 action over the fortnight: 15,678.3 kWh. Details: [docs/v3_results.md](docs/v3_results.md).
 
 | Run | Optimizer | Approvals | Verified saving | Used |
@@ -78,14 +87,16 @@ action over the fortnight: 15,678.3 kWh. Details: [docs/v3_results.md](docs/v3_r
 | Manual | EnergyPlus detection list (4–6 candidates) | 10 manual | −1,072.9 kWh | 14,627.1 kWh |
 | Exact-hold AUTO | detection list | 0 (one grant) | −1,138.8 kWh | 14,556.2 kWh |
 | Surrogate, manual | ML-screened grid, EnergyPlus confirms | 10 manual | −1,565.7 kWh | 14,156.9 kWh |
-| **Envelope AUTO** | ML-screened grid, EnergyPlus confirms | **0** (one grant) | **−1,629.1 kWh (10.4 %)** | **14,089.2 kWh** |
+| **Flexible AUTO** | ML-screened grid, EnergyPlus confirms | **0** (one grant) | **−1,629.1 kWh (10.4 %)** | **14,089.2 kWh** |
 
-The envelope AUTO run reproduces command for command on the current code.
+The Flexible AUTO run reproduces command for command on the current code.
 
 ### Other seasons
 
-The all-season surrogate (v2 with the owner options, trained on all twelve months with the test fortnights locked
-out) on four fortnights, against the fixed 25.5 °C rule; kWh used. Details: [docs/v3_allseason.md](docs/v3_allseason.md).
+The all-season surrogate (v2, trained on all twelve months with the test fortnights locked out) on four fortnights,
+against the fixed 25.5 °C rule; kWh used. It runs with two safety-margin options: a 26.0 °C hold only if the warmest
+occupied zone is projected at or below 25.9 °C, and the rule's 25.5 °C hold allowed below the 2 kWh benefit floor when
+comfort and the peak are fine. Details: [docs/v3_allseason.md](docs/v3_allseason.md).
 
 | Fortnight | No action | AI, manual | Fixed rule | AI, Flexible AUTO | Rule + lighting delay |
 |---|---:|---:|---:|---:|---:|
@@ -111,14 +122,14 @@ rather than let it run on a doubtful day.
   the day chart.
 - **Verified savings.** Every executed action is measured against an independent no-action EnergyPlus replay over its
   own horizon, rebound included; a failed verification suspends AUTO until an operator acts.
-- **Occupancy-based lighting.** The lights of each of the 29 rooms follow its simulated occupants and switch off 15 min
-  after the room empties; the AI can shorten that delay to 5 or 10 min.
+- **Occupancy-based lighting.** Each of the 29 rooms switches its lights with its simulated occupants and turns them off
+  15 min after the room empties; the AI can shorten that delay to 5 or 10 min.
 - **Live digital twin.** The EnergyPlus building in 3D with its rooms, people and lights, Building, Floors and Thermal
   views, a day chart with the AI's forecast at its peak, and a clock that follows the simulation.
 - **Period picker.** The default is the validated June fortnight; visitors can also run any fortnight of the year.
 - **Year view.** The full-year experiment month by month in the three scenarios, with the savings.
 - **Energy Flow.** Electricity along the building's edges, each floor's line at its own modeled power.
-- **AUTO with guards.** Time-limited, owner-scoped permissions: EnergyPlus confirmation and pre-execution checks for
+- **AUTO with guards.** Time-limited, operator-scoped permissions: EnergyPlus confirmation and pre-execution checks for
   every action, a live comfort guard, an early read, suspension after a failed verification (never resumes by itself),
   revoke, expiry, an audit trail, exactly-once execution and exact replay.
 - **Remote View.** A read-only phone page fed over MQTT (EMQX), with no controls.
@@ -133,7 +144,7 @@ rather than let it run on a doubtful day.
 |---|---|
 | ![Year view: monthly electricity in three scenarios](docs/images/year-view.png) | ![Energy Flow along the building edges](docs/images/energy-flow.png) |
 
-![An AUTO decision on a simulated Monday: the AI ranked 242 options, EnergyPlus checked the best ones, and the 25.5 °C hold runs under the owner's permission while 21 of 29 rooms are lit](docs/images/suggestion-or-auto.png)
+![An AUTO decision on a simulated Monday: the AI ranked 242 options, EnergyPlus checked the best ones, and the 25.5 °C hold runs under the operator's permission while 21 of 29 rooms are lit](docs/images/suggestion-or-auto.png)
 
 ## Honest limitations
 
@@ -164,7 +175,7 @@ dashboard only: simulated meter telemetry) · unittest, Vitest, GitHub Actions.
 
 [docs/v3_year.md](docs/v3_year.md) (full year) · [docs/v3_results.md](docs/v3_results.md) (validated results) ·
 [docs/v3_allseason.md](docs/v3_allseason.md) (seasons) · [docs/v3_surrogate.md](docs/v3_surrogate.md) (surrogate and
-envelope) · [CREDITS.md](CREDITS.md) (third-party assets).
+Flexible AUTO) · [CREDITS.md](CREDITS.md) (third-party assets).
 
 ## License
 

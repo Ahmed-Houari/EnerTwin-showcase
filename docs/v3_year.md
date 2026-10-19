@@ -67,7 +67,7 @@ same plugs, same HVAC equipment, sizing and schedule (07:00–18:00 on workdays)
 |---|---|---|
 | **S1 Conventional operation** | Every room at the occupied level, 90 % of the lighting power density 9.69 W/m² (8.72 W/m²), **08:00–18:00 on every workday (Sunday–Thursday)**, whoever is in; at the 18 % essential level (1.74 W/m², the level every scenario keeps in an empty room) at all other times and all weekend (Friday–Saturday). Never 24/7. | The approved v3 schedule |
 | **S2 Smart vacancy control** ("without the AI") | The room controller: a room is lit (90 %) while occupied and drops to the 18 % essential level 15 minutes after it empties. | The approved v3 schedule |
-| **S3 EnerTwin** ("with the AI") | As S2, plus any lighting change the AI makes (none in this protocol, see below). | The all-season optimizer `surrogate_v2` with the owner options (a) and (b); every cooling proposal approved as in the manual validation protocol; every guard active |
+| **S3 EnerTwin** ("with the AI") | As S2, plus any lighting change the AI makes (none in this protocol, see below). | The all-season optimizer `surrogate_v2` with its safety-margin options (a) and (b); every cooling proposal approved as in the manual validation protocol; every guard active |
 
 S2 is exactly the no-action replay the validated results compare against. S1 uses the room controller's own levels
 (`lit_fraction` 0.9, `essential_lighting_fraction` 0.18), so S1 and S2 differ only in *when* a room is lit.
@@ -235,4 +235,4 @@ python -m scripts.v3_year report                    # data/v3_year/summary.json
 ```
 
 Every job waits for 1.5 GB of free memory and 6 GB of Windows commit headroom above its own need before it starts, and a
-failed job resumes on the next call, skipping finished work. Run times on this laptop (32 threads): S2 batch runs and the continuous annual run (`prepare`) with 12 workers; the 27 AI segments about 55 minutes wall-clock with 4 in parallel (2.9 h of run time; 280–880 s each); the 27 S1 runs under 2 minutes with 8 workers; the report about 9 minutes (it reads every 5-minute step of 3 × 365 days).
+failed job resumes on the next call, skipping finished work. Run times on the development machine (32 threads): S2 batch runs and the continuous annual run (`prepare`) with 12 workers; the 27 AI segments about 55 minutes wall-clock with 4 in parallel (2.9 h of run time; 280–880 s each); the 27 S1 runs under 2 minutes with 8 workers; the report about 9 minutes (it reads every 5-minute step of 3 × 365 days).
