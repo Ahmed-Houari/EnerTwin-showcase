@@ -1,0 +1,10 @@
+{
+ "mode": "showcase",
+ "source_commit": "a295defad275bf9b70d9e8409a95da582aceb0cc",
+ "built_at_utc": "2026-10-19T21:06:42Z",
+ "status": "clean",
+ "files": 11,
+ "excluded": 989,
+ "placeholders_replaced": 0,
+ "private_strings_checked": 3
+}
