@@ -23,10 +23,16 @@ flowchart LR
   OCC[Simulated occupancy<br/>29 rooms] --> EP
   EP[EnergyPlus model<br/>3 floors, 15 zones, PVAV] <-->|5-minute steps| RT[v3 demo runtime]
   RT <--> AI["AI optimization (surrogate-assisted)<br/>ML surrogate ranks 242 options · EnergyPlus confirms ·<br/>forecast · guards · verification"]
+  RT --> RS[("Run store<br/>steps.jsonl + decisions.jsonl<br/>hash-chained audit trail")]
   RT --> API[FastAPI backend<br/>127.0.0.1 only]
   OP[Operator] -->|approve / reject / AUTO grant| API
+  API <--> SQ[("SQLite<br/>sign-in · inbox.sqlite3 approvals<br/>consent.sqlite3 AUTO grants")]
+  SQ -->|queued requests| RT
+  BL[Blender] --> GLB[3D models<br/>GLB, baked lighting] --> UI
   API --> UI[React + Three.js<br/>digital twin]
   API --> BR[MQTT bridge] --> MQ[(EMQX broker)] --> RV[Remote View<br/>read-only PWA]
+  PG[("PostgreSQL<br/>v1 dashboard (archived)")]
+  style PG stroke-dasharray: 5 5
 ```
 
 The ML surrogate only screens candidates. It never approves, executes or verifies anything: every executed action is
@@ -150,7 +156,9 @@ Source code is private; available for review on request.
 ## Tech stack
 
 EnergyPlus 26.2 (Python API, 5-minute co-simulation) · Python 3.13, FastAPI, numpy, scikit-learn (gradient-boosted
-surrogate) · React, TypeScript, Vite, Three.js · MQTT (paho-mqtt, EMQX Serverless) · unittest, Vitest, GitHub Actions.
+surrogate) · React, TypeScript, Vite, Three.js · Blender (3D building and interior models, baked lighting) · MQTT
+(paho-mqtt, EMQX Serverless) · SQLite (v3: operator sign-in, approval and AUTO-consent queues) · PostgreSQL (v1
+dashboard only: simulated meter telemetry) · unittest, Vitest, GitHub Actions.
 
 ## Documentation
 
