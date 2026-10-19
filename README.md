@@ -1,10 +1,10 @@
 # EnerTwin: an AI energy manager for a simulated office building
 
 
-EnerTwin runs a three-floor office in Riyadh as an EnergyPlus co-simulation, five minutes at a time, and shows it as a
-live 3D digital twin. Each morning an AI forecasts the day, screens hundreds of cooling and lighting options, has the
-physics model confirm the best ones, applies the chosen change (with an operator's approval or under a time-limited
-AUTO permission) and then verifies the saving against a replay of the same day without the change.
+EnerTwin runs a three-floor office in Riyadh as an EnergyPlus co-simulation, five minutes at a time, shown as a live 3D twin.
+Its core is **AI optimization (surrogate-assisted)**: each workday morning an ML surrogate ranks 242 candidate cooling and
+lighting strategies (about 0.11 ms each), EnergyPlus confirms the best, and the controller executes the chosen one with an
+operator's approval or under a time-limited AUTO permission; every executed action is then verified against a no-action replay.
 
 > **Everything here is simulated.** No meter, sensor or real building is involved, and the building model is not
 > calibrated to a real building. Read the [limitations](#honest-limitations) before quoting any number.
@@ -22,7 +22,7 @@ flowchart LR
   EPW[TMYx weather<br/>Riyadh] --> EP
   OCC[Simulated occupancy<br/>29 rooms] --> EP
   EP[EnergyPlus model<br/>3 floors, 15 zones, PVAV] <-->|5-minute steps| RT[v3 demo runtime]
-  RT <--> AI[AI: forecast · ML surrogate screening ·<br/>EnergyPlus confirmation · guards · verification]
+  RT <--> AI["AI optimization (surrogate-assisted)<br/>ML surrogate ranks 242 options · EnergyPlus confirms ·<br/>forecast · guards · verification"]
   RT --> API[FastAPI backend<br/>127.0.0.1 only]
   OP[Operator] -->|approve / reject / AUTO grant| API
   API --> UI[React + Three.js<br/>digital twin]
@@ -95,6 +95,18 @@ rather than let it run on a doubtful day.
 
 ## Features
 
+- **AI optimization (surrogate-assisted).** At the 09:00 decision of a workday an ML surrogate ranks 242 candidate
+  strategies (108 cooling holds, 132 pre-cool variants, 2 lighting delays) in about 0.11 ms each (benchmark,
+  [docs/v3_surrogate.md](docs/v3_surrogate.md)); EnergyPlus then simulates the best few from the building's current
+  state, and the controller executes the chosen one after an operator's approval or under AUTO. The surrogate only
+  ranks: it never approves, executes or verifies, and outside its training range a fixed candidate list replaces it.
+- **Same-day forecast.** Each morning at 09:00 EnergyPlus forecasts the rest of the day from the building's current
+  state, the expected occupancy and the previous day's weather: the day's total kWh and its peak (kW and time), drawn on
+  the day chart.
+- **Verified savings.** Every executed action is measured against an independent no-action EnergyPlus replay over its
+  own horizon, rebound included; a failed verification suspends AUTO until an operator acts.
+- **Occupancy-based lighting.** The lights of each of the 29 rooms follow its simulated occupants and switch off 15 min
+  after the room empties; the AI can shorten that delay to 5 or 10 min.
 - **Live digital twin.** The EnergyPlus building in 3D with its rooms, people and lights, Building, Floors and Thermal
   views, a day chart with the AI's forecast at its peak, and a clock that follows the simulation.
 - **Period picker.** The default is the validated June fortnight; visitors can also run any fortnight of the year.
