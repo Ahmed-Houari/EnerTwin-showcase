@@ -132,6 +132,19 @@ rather than let it run on a doubtful day.
 - **AUTO with guards.** Time-limited, operator-scoped permissions: EnergyPlus confirmation and pre-execution checks for
   every action, a live comfort guard, an early read, suspension after a failed verification (never resumes by itself),
   revoke, expiry, an audit trail, exactly-once execution and exact replay.
+- **Live temperature.** The Thermal view colours every zone by its simulated room air temperature (16–32 °C scale),
+  with each level's average and the cooling setpoint in its legend; Airflow adds the illustrative supply and return air
+  paths. Two moments of the same simulated Monday, 11 June:
+
+| 18:35, after hours: building empty, cooling set back to 30 °C; zones 27.4–29.3 °C (warmest: L3 North, 29.3 °C) | 12:50, cooling on at the AI's 25.5 °C hold: all 14 occupied zones 23.7–25.5 °C, inside the 19.5–26 °C comfort band |
+|---|---|
+| ![Thermal view at 18:35: the empty building warms under the 30 °C setback, zones shown in amber](docs/images/thermal-warm.png) | ![Thermal view at 12:50: the occupied building under the AI's 25.5 °C hold, zones shown in blue](docs/images/thermal-cool.png) |
+
+<p align="center">
+  <img src="docs/images/thermal-airflow.png" width="640" alt="Thermal view at 12:51 with Airflow on: illustrative supply and return air paths through the three floors">
+  <br><em>12:51, Airflow on: illustrative supply and return air paths, not surveyed ductwork</em>
+</p>
+
 - **Remote View.** A read-only phone page fed over MQTT (EMQX), with no controls.
 
 <p align="center">
